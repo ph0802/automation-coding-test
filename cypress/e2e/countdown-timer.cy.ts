@@ -3,35 +3,12 @@ import { NextRacesResponseData } from "../@types/race";
 
 describe("Countdown Timer", () => {
     beforeEach(() => {
-        // Jump time is exceeded for the first race
-        const now = dayjs().add(-30, "second");
-
-        // Always keep the latest start time for interception
-        cy.fixture("nextRaces").then((races: NextRacesResponseData) => {
-            const newRaces = races;
-            Object.entries(races.race_summaries).forEach(([key], index) => {
-                if (index === 0) {
-                    newRaces.race_summaries[key].advertised_start = now
-                        .add(-5, "minute")
-                        .toISOString();
-                    return;
-                }
-                newRaces.race_summaries[key].advertised_start = now
-                    .add(20 * index, "second")
-                    .toISOString();
-            });
-            cy.intercept("GET", Cypress.env("nextRacesAPI"), newRaces).as(
-                "getNextRaces"
-            );
-        });
-
+        cy.mockNextToGoRaces();
         cy.visit("/");
-
-        cy.getByTestId("count-down-0").as("FirstCountDown");
-        cy.getByTestId("count-down-1").as("SecondCountDown");
     });
 
     it("Should validate that timer is ticking down", () => {
+        cy.getByTestId("count-down-1").as("SecondCountDown");
         cy.get("@SecondCountDown")
             .invoke("text")
             .then((countDownBefore) => {
@@ -56,7 +33,7 @@ describe("Countdown Timer", () => {
             const diffFromNow = dayjs(startTime).diff(dayjs(), "second");
 
             expect(diffFromNow).to.be.below(0);
-            cy.get("@FirstCountDown").contains("-");
+            cy.getByTestId("count-down-0").contains("-");
         });
     });
 
@@ -73,6 +50,4 @@ describe("Countdown Timer", () => {
             );
         });
     });
-
-    it("Insert additional tests here and below", () => { });
 });
