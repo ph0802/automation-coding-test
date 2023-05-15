@@ -1,17 +1,78 @@
-describe('Countdown Timer', () => {
-  it.todo('Should validate that timer is ticking down', () => {
-    // Handle this deterministically through mocking race jump times
-  });
+import dayjs from "dayjs";
+import { NextRacesResponseData } from "../@types/race";
 
-  it.todo('Should validate that race time sign swaps to negative when expected jump time is exceeded', () => {
-    // Handle this deterministically through mocking race jump times
-  });
+describe("Countdown Timer", () => {
+    beforeEach(() => {
+        // Jump time is exceeded for the first race
+        const now = dayjs().add(-30, "second");
 
-  it.todo('Should validate that races do not display after 5 minutes past the jump', () => {
-    // Handle this deterministically through mocking race jump times
-  });
+        // Always keep the latest start time for interception
+        cy.fixture("nextRaces").then((races: NextRacesResponseData) => {
+            const newRaces = races;
+            Object.entries(races.race_summaries).forEach(([key], index) => {
+                if (index === 0) {
+                    newRaces.race_summaries[key].advertised_start = now
+                        .add(-5, "minute")
+                        .toISOString();
+                    return;
+                }
+                newRaces.race_summaries[key].advertised_start = now
+                    .add(20 * index, "second")
+                    .toISOString();
+            });
+            cy.intercept("GET", Cypress.env("nextRacesAPI"), newRaces).as(
+                "getNextRaces"
+            );
+        });
 
-  it.todo('Insert additional tests here and below', () => {
-    
-  });
+        cy.visit("/");
+
+        cy.getByTestId("count-down-0").as("FirstCountDown");
+        cy.getByTestId("count-down-1").as("SecondCountDown");
+    });
+
+    it("Should validate that timer is ticking down", () => {
+        cy.get("@SecondCountDown")
+            .invoke("text")
+            .then((countDownBefore) => {
+                const before = Number(countDownBefore.replace("s", " "));
+
+                // Compare the value after 1 sec
+                cy.wait(1000);
+
+                // Expect the countdown should tick down
+                cy.get("@SecondCountDown")
+                    .invoke("text")
+                    .should("eq", `${before - 1}s`);
+            });
+    });
+
+    it("Should validate that race time sign swaps to negative when expected jump time is exceeded", () => {
+        cy.wait("@getNextRaces").then((interception) => {
+            const { race_summaries } = interception.response
+                ?.body as NextRacesResponseData;
+
+            const startTime = Object.values(race_summaries)[0].advertised_start;
+            const diffFromNow = dayjs(startTime).diff(dayjs(), "second");
+
+            expect(diffFromNow).to.be.below(0);
+            cy.get("@FirstCountDown").contains("-");
+        });
+    });
+
+    it("Should validate that races do not display after 5 minutes past the jump", () => {
+        cy.wait("@getNextRaces").then((interception) => {
+            const { race_summaries } = interception.response
+                ?.body as NextRacesResponseData;
+
+            // Note: first fixture has jumpped 5 minutes ago
+            const expiredRace = Object.values(race_summaries)[0];
+            cy.getByTestId("meeting-name-0").should(
+                "not.have.text",
+                expiredRace.meeting_name
+            );
+        });
+    });
+
+    it("Insert additional tests here and below", () => { });
 });

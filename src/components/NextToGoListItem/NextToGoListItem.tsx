@@ -1,20 +1,23 @@
-import './NextToGoListItem.css';
+import "./NextToGoListItem.css";
 import { memo } from "react";
 import { ListRace } from "../../types/racing";
 import { CountdownTimer } from "../CountdownTimer/CountdownTimer";
 
-type Props = { race: ListRace };
+type Props = { race: ListRace; itemIndex: number };
 
-const _NextToGoListItem = ({ race }: Props): JSX.Element => {
+const _NextToGoListItem = ({ race, itemIndex }: Props): JSX.Element => {
   return (
     <div className="item">
       <div className="race-name">
         <b className="race-number">R{race.raceNumber}</b>
-        <p>{race.meetingName}</p>
+        <p data-testid={`meeting-name-${itemIndex}`}>{race.meetingName}</p>
       </div>
-      <CountdownTimer advertisedStart={race.advertisedStart} />
+      <CountdownTimer
+        advertisedStart={race.advertisedStart}
+        itemIndex={itemIndex}
+      />
     </div>
   );
-}
+};
 
 export const NextToGoListItem = memo(_NextToGoListItem);

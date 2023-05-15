@@ -1,15 +1,20 @@
-import './CountdownTimer.css';
+import "./CountdownTimer.css";
 import { memo, useEffect, useState } from "react";
 
-type Props = { advertisedStart: Date };
+type Props = { advertisedStart: Date; itemIndex: number };
 
-const _CountdownTimer = ({ advertisedStart }: Props): JSX.Element => {
+const _CountdownTimer = ({
+  advertisedStart,
+  itemIndex,
+}: Props): JSX.Element => {
   const [countdownString, setCountdownString] = useState<string>();
 
   const getCountdownString = (): string => {
-    let secondsFromNow = Math.floor((advertisedStart.getTime() - (new Date()).getTime()) / 1000);
+    let secondsFromNow = Math.floor(
+      (advertisedStart.getTime() - new Date().getTime()) / 1000
+    );
 
-    const prefix = secondsFromNow < 0 ? '-' : '';
+    const prefix = secondsFromNow < 0 ? "-" : "";
 
     secondsFromNow = Math.abs(secondsFromNow);
 
@@ -24,25 +29,23 @@ const _CountdownTimer = ({ advertisedStart }: Props): JSX.Element => {
     }
 
     const secondsRemainder = secondsFromNow - minutes * 60;
-    
+
     if (minutes >= 5 || secondsRemainder === 0) {
       return `${prefix}${minutes}m`;
     }
 
     return `${prefix}${minutes}m ${secondsRemainder}s`;
-  }
+  };
 
   useEffect(() => {
     setCountdownString(getCountdownString());
     setInterval(() => {
       setCountdownString(getCountdownString());
     }, 1000);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [advertisedStart]);
 
-  return (
-    <p>{countdownString}</p>
-  )
-}
+  return <p data-testid={`count-down-${itemIndex}`}>{countdownString}</p>;
+};
 
 export const CountdownTimer = memo(_CountdownTimer);
