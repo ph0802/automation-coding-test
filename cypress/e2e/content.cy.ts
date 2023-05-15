@@ -16,7 +16,7 @@ describe("Page Content", () => {
         cy.wait("@getNextRaces").then((interception) => {
             const raceSummaries = Object.values(
                 interception.response?.body.race_summaries
-            ).slice(1, 6) as RaceSummary[]; // Note that the first race of fixture won't display
+            ).slice(0, 5) as RaceSummary[];
 
             raceSummaries.forEach((race, index) => {
                 // Should match meeting name

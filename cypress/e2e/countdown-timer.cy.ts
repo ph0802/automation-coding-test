@@ -3,7 +3,7 @@ import { NextRacesResponseData } from "../@types/race";
 
 describe("Countdown Timer", () => {
     beforeEach(() => {
-        cy.mockNextToGoRaces();
+        cy.mockNextToGoRaces({ shouldIncludeExpiredRace: true });
         cy.visit("/");
     });
 

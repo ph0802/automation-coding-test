@@ -22,8 +22,14 @@ declare global {
             ): Chainable<JQuery<HTMLElement>>;
             /**
              * Custom command to mock Next To Go races data
+             *
+             * @param options if `shouldIncludeExpiredRace` is true, the start time
+             * of first race is over 5 minutes, which won't be able to display
+             * in the list
              */
-            mockNextToGoRaces(): Chainable<JQuery<HTMLElement>>;
+            mockNextToGoRaces(options?: {
+                shouldIncludeExpiredRace: boolean;
+            }): Chainable<JQuery<HTMLElement>>;
         }
     }
 }
@@ -41,13 +47,7 @@ Cypress.Commands.add("getByTestId", (testId, options) => {
     }
 });
 
-/**
- * Mocking Next To Go races data
- *
- * Note that the start time of first race is over 5 minutes,
- * which won't be able to display in the list
- */
-Cypress.Commands.add("mockNextToGoRaces", () => {
+Cypress.Commands.add("mockNextToGoRaces", (options) => {
     // Jump time is exceeded for the first race
     const now = dayjs().add(-30, "second");
 
@@ -55,7 +55,7 @@ Cypress.Commands.add("mockNextToGoRaces", () => {
     cy.fixture("nextRaces").then((races: NextRacesResponseData) => {
         const newRaces = races;
         Object.entries(races.race_summaries).forEach(([key], index) => {
-            if (index === 0) {
+            if (options?.shouldIncludeExpiredRace && index === 0) {
                 newRaces.race_summaries[key].advertised_start = now
                     .add(-5, "minute")
                     .toISOString();
